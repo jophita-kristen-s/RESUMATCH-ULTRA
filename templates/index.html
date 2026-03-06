@@ -212,7 +212,7 @@ textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba
 .skill-bar{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--green),var(--purple));transition:width 1.2s ease;}
 .skill-weeks{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);flex-shrink:0;min-width:35px;text-align:right;}
 
-.course-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;font-size:11px;background:var(--card2);border:1px solid var(--border);text-decoration:none;color:var(--text);transition:all .15s;font-family:'JetBrains Mono',monospace;}
+.course-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;font-size:11px;background:var(--card2);border:1px solid var(--border);text-decoration:none;color:var(--text);transition:all .15px;font-family:'JetBrains Mono',monospace;}
 .course-chip:hover{background:linear-gradient(135deg,#7c6fff,#4d9fff);color:#fff;border-color:transparent;}
 
 .boards-section{margin-bottom:28px;}
@@ -262,7 +262,7 @@ textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba
 <body>
 <div id="root"></div>
 
-<script id="countries-data" type="application/json">{{ countries | tojson }}</script>
+<script id="countries-data" type="application/json">{{ countries | tojson | safe }}</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
@@ -271,10 +271,7 @@ textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba
 {% raw %}
 const {useState,useEffect,useRef,useCallback}=React;
 
-// Load countries data injected by Flask/Jinja2
 const COUNTRIES_RAW = JSON.parse(document.getElementById('countries-data').textContent);
-
-// Rebuild COUNTRIES into region → array format for the selector
 const COUNTRIES = COUNTRIES_RAW;
 
 /* ─────────────────────────────────────────────
@@ -335,10 +332,16 @@ function JobCard({job,index}){
     if(!open&&!rev){
       setRevLoad(true);
       try{
-        // Call Flask backend for AI review
-        const resp=await fetch("/api/review",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(job)});
+        const resp=await fetch("/api/review",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify(job)
+        });
+        if(!resp.ok) throw new Error("Review request failed");
         setRev(await resp.json());
-      }catch{setRev({review:"Unable to generate review.",prioritySkills:[]});}
+      }catch(e){
+        setRev({review:"Unable to generate review at this time.",prioritySkills:[]});
+      }
       setRevLoad(false);
     }
   }
@@ -384,12 +387,12 @@ function JobCard({job,index}){
             <div className="ai-label">⚡ AI Career Coach</div>
             {revLoad?(
               <div style={{display:"flex",gap:"8px",alignItems:"center",color:"var(--muted)",fontSize:"13px"}}>
-                <span className="spin" style={{borderTopColor:"var(--green)"}}/>Generating personalized review...
+                <span className="spin" style={{borderTopColor:"var(--green)"}}/>Generating personalised review...
               </div>
             ):rev?(
               <>
                 <p className="ai-text">{rev.review}</p>
-                {rev.prioritySkills?.length>0&&(
+                {rev.prioritySkills&&rev.prioritySkills.length>0&&(
                   <div style={{marginTop:"12px"}}>
                     <div style={{fontFamily:"monospace",fontSize:"9px",color:"var(--green)",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"6px"}}>🎯 Priority skills to unlock this role</div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:"5px"}}>
@@ -401,7 +404,7 @@ function JobCard({job,index}){
             ):null}
           </div>
 
-          {job.matched?.length>0&&(
+          {job.matched&&job.matched.length>0&&(
             <div style={{marginBottom:"12px"}}>
               <div style={{fontFamily:"monospace",fontSize:"9px",color:"var(--muted)",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"7px"}}>✅ Skills you have ({job.matched.length})</div>
               <div style={{display:"flex",flexWrap:"wrap",gap:"5px"}}>
@@ -409,7 +412,7 @@ function JobCard({job,index}){
               </div>
             </div>
           )}
-          {job.missing?.length>0&&(
+          {job.missing&&job.missing.length>0&&(
             <div style={{marginBottom:"14px"}}>
               <div style={{fontFamily:"monospace",fontSize:"9px",color:"var(--muted)",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"7px"}}>❌ Skills to learn ({job.missing.length})</div>
               <div style={{display:"flex",flexWrap:"wrap",gap:"5px"}}>
@@ -417,7 +420,7 @@ function JobCard({job,index}){
               </div>
             </div>
           )}
-          {job.niceToHave?.length>0&&(
+          {job.niceToHave&&job.niceToHave.length>0&&(
             <div style={{marginBottom:"14px"}}>
               <div style={{fontFamily:"monospace",fontSize:"9px",color:"var(--muted)",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"7px"}}>💡 Nice to have</div>
               <div style={{display:"flex",flexWrap:"wrap",gap:"5px"}}>
@@ -455,11 +458,13 @@ function LearningPath({role,missingSkills,userSkills}){
   const[loading,setLoading]=useState(true);
 
   useEffect(()=>{
-    if(!role||!missingSkills.length){setLoading(false);return;}
-    // Call Flask backend for roadmap
-    fetch("/api/roadmap",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({role,missingSkills:missingSkills.slice(0,7),userSkills})})
-      .then(r=>r.json())
+    if(!role||!missingSkills||!missingSkills.length){setLoading(false);return;}
+    fetch("/api/roadmap",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({role,missingSkills:missingSkills.slice(0,7),userSkills})
+    })
+      .then(r=>{if(!r.ok)throw new Error("Roadmap failed");return r.json();})
       .then(d=>{setData(d);setLoading(false);})
       .catch(()=>setLoading(false));
   },[role]);
@@ -469,15 +474,15 @@ function LearningPath({role,missingSkills,userSkills}){
   return(
     <div className="learn-card fu2">
       <div className="learn-title">📈 AI Learning Roadmap</div>
-      <div className="learn-sub">Personalized path to become a <strong>{role}</strong> — sorted by impact</div>
+      <div className="learn-sub">Personalised path to become a <strong>{role}</strong> — sorted by impact</div>
       {loading?(
         <div style={{display:"flex",gap:"10px",alignItems:"center",color:"var(--muted)",fontSize:"13px"}}>
-          <span className="spin" style={{borderTopColor:"var(--green)"}}/>Generating your personalized roadmap...
+          <span className="spin" style={{borderTopColor:"var(--green)"}}/>Generating your personalised roadmap...
         </div>
       ):data.length?(
         data.map(item=>(
           <div key={item.skill} className="skill-item">
-            <div>
+            <div style={{flex:1,minWidth:0}}>
               <div className="skill-name">{item.skill}</div>
               <div className="skill-why">{item.why}</div>
               <div style={{display:"flex",flexWrap:"wrap",gap:"5px",marginTop:"7px"}}>
@@ -497,24 +502,25 @@ function LearningPath({role,missingSkills,userSkills}){
             </div>
           </div>
         ))
-      ):null}
+      ):(
+        <div style={{color:"var(--muted)",fontSize:"13px"}}>No roadmap data available.</div>
+      )}
     </div>
   );
 }
 
-/* Build board URL from template */
-function makeBoardUrl(template, skills, city){
-  const s = (skills||[]).slice(0,3).join(" ");
-  const loc = city && city!=="Any City" ? city : "";
+function makeBoardUrl(template,skills,city){
+  const s=(skills||[]).slice(0,3).join(" ");
+  const loc=city&&city!=="Any City"?city:"";
   return template
-    .replace("{skills}", encodeURIComponent(s))
-    .replace("{loc}", encodeURIComponent(loc))
-    .replace("{location}", encodeURIComponent(loc));
+    .replace("{skills}",encodeURIComponent(s))
+    .replace("{loc}",encodeURIComponent(loc))
+    .replace("{location}",encodeURIComponent(loc));
 }
 
-function BoardLinks({boards,skills,city,isIndia}){
-  if(!boards?.length||!skills?.length)return null;
+function BoardLinks({boards,skills,city}){
   const[search,setSearch]=useState("");
+  if(!boards||!boards.length||!skills||!skills.length)return null;
 
   const filtered=boards.filter(b=>{
     const q=search.toLowerCase();
@@ -573,7 +579,7 @@ function CountrySelector({selected,onSelect}){
           <div className="region-title">— {region} —</div>
           <div className="country-chips">
             {countries.map(c=>(
-              <button key={c.code} className={`country-chip ${selected?.code===c.code?"active":""}`}
+              <button key={c.code} className={`country-chip ${selected&&selected.code===c.code?"active":""}`}
                 onClick={()=>onSelect(c)}>
                 <span>{c.flag}</span><span>{c.name}</span>
               </button>
@@ -608,9 +614,13 @@ function App(){
 
   async function analyze(){
     if(!resume.trim()||!country)return;
-    setLoading(true);setError("");setJobs([]);setAnalyzed(false);setLogs([]);
+    setLoading(true);
+    setError("");
+    setJobs([]);
+    setAnalyzed(false);
+    setLogs([]);
 
-    log("text","Sending resume to Flask backend...");
+    log("text","Sending resume to backend...");
     try{
       log("text","Scanning resume for skills...");
       const resp=await fetch("/api/analyze",{
@@ -618,6 +628,14 @@ function App(){
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({resume,country:country.name,city})
       });
+
+      if(!resp.ok){
+        const err=await resp.json().catch(()=>({error:"Server error"}));
+        setError(err.error||"Server error — please try again");
+        setLoading(false);
+        return;
+      }
+
       const data=await resp.json();
 
       if(data.error){
@@ -626,29 +644,33 @@ function App(){
         return;
       }
 
-      setMySkills(data.skills);
-      log("ok",`Detected ${data.skills.length} skills: ${data.skills.slice(0,6).join(", ")}${data.skills.length>6?"...":""}`);
+      setMySkills(data.skills||[]);
+      log("ok",`Detected ${(data.skills||[]).length} skills: ${(data.skills||[]).slice(0,6).join(", ")}${(data.skills||[]).length>6?"...":""}`);
 
       setMyRole(data.role);
-      log("data",`Detected role: ${data.role} (${data.confidence}% match)`);
+      log("data",`Detected role: ${data.role} (${data.confidence}% confidence)`);
 
-      setMissing(data.missing);
-      if(data.missing.length)log("warn",`Skill gaps found: ${data.missing.slice(0,5).join(", ")}${data.missing.length>5?` ... +${data.missing.length-5} more`:""}`);
+      setMissing(data.missing||[]);
+      if(data.missing&&data.missing.length){
+        log("warn",`Skill gaps: ${data.missing.slice(0,5).join(", ")}${data.missing.length>5?` +${data.missing.length-5} more`:""}`);
+      }
 
-      setSalaryRef(data.salaryRef);
-      if(data.salaryRef)log("data",`Salary benchmark for ${data.role} in ${country.name}: ${data.salaryRef}`);
+      setSalaryRef(data.salaryRef||null);
+      if(data.salaryRef){
+        log("data",`Salary benchmark for ${data.role} in ${country.name}: ${data.salaryRef}`);
+      }
 
-      log("ai",`Searching for AI-matched jobs in ${city!=="Any City"?city+", ":""}${country.name}...`);
-      if(data.jobs.length){
+      log("text",`Searching jobs in ${city!=="Any City"?city+", ":""}${country.name}...`);
+      if(data.jobs&&data.jobs.length){
         setJobs(data.jobs);
-        log("ok",`✓ ${data.jobs.length} jobs found, sorted by company rating`);
+        log("ok",`✓ ${data.jobs.length} jobs found`);
       }else{
         log("warn","No jobs returned — use job board links below");
       }
 
       setAnalyzed(true);
     }catch(e){
-      setError("Error: "+e.message);
+      setError("Network error: "+e.message);
       setAnalyzed(true);
     }finally{
       setLoading(false);
@@ -656,14 +678,14 @@ function App(){
   }
 
   function sortedJobs(){
-    if(sortBy==="rating") return[...jobs].sort((a,b)=>(b.companyRating||0)-(a.companyRating||0));
-    if(sortBy==="match")  return[...jobs].sort((a,b)=>b.score-a.score);
-    if(sortBy==="salary") return[...jobs].sort((a,b)=>(b.salary?1:0)-(a.salary?1:0)||b.score-a.score);
+    if(sortBy==="rating")return[...jobs].sort((a,b)=>(b.companyRating||0)-(a.companyRating||0));
+    if(sortBy==="match") return[...jobs].sort((a,b)=>b.score-a.score);
+    if(sortBy==="salary")return[...jobs].sort((a,b)=>(b.salary?1:0)-(a.salary?1:0)||b.score-a.score);
     return jobs;
   }
 
-  const currentBoards=country?.boards||[];
-  const currentCities=country?.cities||[];
+  const currentBoards=country&&country.boards?country.boards:[];
+  const currentCities=country&&country.cities?country.cities:[];
 
   return(
     <div style={{minHeight:"100vh"}}>
@@ -673,7 +695,7 @@ function App(){
           <div className="logo-icon">RM</div>
           <div>
             <div className="logo-name">RESUMATCH ULTRA</div>
-            <div className="logo-sub">AI Job Intelligence · Country-Wise · Flask Powered</div>
+            <div className="logo-sub">AI Job Intelligence · Country-Wise</div>
           </div>
         </div>
         {analyzed&&(
@@ -694,9 +716,9 @@ function App(){
         {/* HERO */}
         {!analyzed&&(
           <div className="hero fu">
-            <div className="hero-tag">🐍 Python + Flask Backend · React Frontend</div>
+            <div className="hero-tag">🐍 Python + Flask · Zero External APIs</div>
             <h1>AI Finds Your<br/><span>Perfect Job</span><br/>Worldwide</h1>
-            <p>Paste your resume — Python AI detects your skills, identifies your role, searches live jobs in 40+ countries, scores every match, and builds you a personalised learning roadmap.</p>
+            <p>Paste your resume — AI detects your skills, identifies your role, matches jobs in 40+ countries, scores every result, and builds a personalised learning roadmap.</p>
           </div>
         )}
 
@@ -712,7 +734,7 @@ function App(){
             <span>🌍 Select Country</span>
             {country&&<span style={{color:"var(--accent)",fontWeight:"700"}}>{country.flag} {country.name}</span>}
           </div>
-          <CountrySelector selected={country} onSelect={c=>{setCountry(c);setCity("Any City");setAnalyzed(false);setJobs([]);}}/>
+          <CountrySelector selected={country} onSelect={c=>{setCountry(c);setCity("Any City");setAnalyzed(false);setJobs([]);setLogs([]);setError("");}}/>
 
           {country&&currentCities.length>0&&(
             <div style={{marginTop:"20px"}}>
@@ -734,7 +756,7 @@ function App(){
             <textarea
               value={resume}
               onChange={e=>setResume(e.target.value)}
-              placeholder={`Paste your resume or LinkedIn summary here...\n\nExample:\nFull Stack Developer | 4 years\nSkills: React, Node.js, TypeScript, PostgreSQL, Docker, AWS, GraphQL, Git, Agile\n\nBuilt scalable microservices handling 2M+ daily users at FinTech startup.\nLed team of 3 engineers using Scrum methodology.`}
+              placeholder={`Paste your resume or LinkedIn summary here...\n\nExample:\nFull Stack Developer | 4 years\nSkills: React, Node.js, TypeScript, PostgreSQL, Docker, AWS, GraphQL\n\nBuilt scalable microservices handling 2M+ daily users at FinTech startup.\nLed team of 3 engineers using Scrum methodology.`}
             />
             {mySkills.length>0&&(
               <div style={{display:"flex",flexWrap:"wrap",gap:"5px",marginTop:"10px",alignItems:"center"}}>
@@ -745,12 +767,11 @@ function App(){
           </div>
 
           <button className="analyze-btn" onClick={analyze}
-            disabled={loading||!resume.trim()||!country}
-            style={(!resume.trim()||!country)?{opacity:.4}:{}}>
+            disabled={loading||!resume.trim()||!country}>
             {loading?(
-              <><span className="spin"/>Scanning + Python AI Job Search Running...</>
+              <><span className="spin"/>Scanning Resume + Finding Jobs...</>
             ):(
-              `🐍 AI FIND MY JOBS IN ${country?country.flag+" "+country.name.toUpperCase():"SELECT A COUNTRY"} →`
+              `🐍 FIND MY JOBS IN ${country?country.flag+" "+country.name.toUpperCase():"SELECT A COUNTRY"} →`
             )}
           </button>
         </div>
@@ -799,7 +820,7 @@ function App(){
               <div style={{animation:"fadeIn .3s ease"}}>
                 <div className="sort-row">
                   <div className="section-hdr" style={{marginBottom:0}}>
-                    {jobs.length} AI-Matched Jobs · {country?.flag} {country?.name}
+                    {jobs.length} AI-Matched Jobs · {country&&country.flag} {country&&country.name}
                   </div>
                   <div style={{display:"flex",gap:"6px"}}>
                     {[{id:"rating",l:"⭐ Rating"},{id:"match",l:"🎯 Match"},{id:"salary",l:"💰 Salary"}].map(s=>(
@@ -851,20 +872,20 @@ function App(){
             {activeTab==="boards"&&(
               <div style={{animation:"fadeIn .3s ease"}}>
                 <a className="gjobs-link"
-                  href={`https://www.google.com/search?q=${encodeURIComponent(mySkills.slice(0,3).join(" ")+" jobs "+(city!=="Any City"?city+", ":"")+country?.name)}&ibp=htl;jobs`}
+                  href={`https://www.google.com/search?q=${encodeURIComponent(mySkills.slice(0,3).join(" ")+" jobs "+(city!=="Any City"?city+", ":"")+(country?country.name:""))}&ibp=htl;jobs`}
                   target="_blank" rel="noopener noreferrer">
                   <div style={{fontSize:"32px"}}>🌐</div>
                   <div style={{flex:1}}>
                     <div style={{fontFamily:"monospace",fontSize:"10px",color:"var(--purple)",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"4px"}}>
-                      Google Jobs · {city!=="Any City"?city+", ":""}{country?.name} · With Ratings
+                      Google Jobs · {city!=="Any City"?city+", ":""}{country&&country.name} · Live Results
                     </div>
                     <div style={{color:"var(--muted)",fontSize:"13px"}}>
-                      {mySkills.slice(0,4).join(" + ")} · Live results · ⭐ Company ratings included
+                      {mySkills.slice(0,4).join(" + ")} · ⭐ Company ratings included
                     </div>
                   </div>
                   <div style={{fontFamily:"monospace",fontSize:"13px",color:"var(--purple)",flexShrink:0}}>Open →</div>
                 </a>
-                <BoardLinks boards={currentBoards} skills={mySkills} city={city} isIndia={country?.code==="IN"}/>
+                <BoardLinks boards={currentBoards} skills={mySkills} city={city}/>
               </div>
             )}
           </>
@@ -874,12 +895,12 @@ function App(){
         {!analyzed&&!loading&&(
           <div className="empty fu3">
             <div className="empty-icon">🌍</div>
-            <div className="empty-text">Select a country · paste resume · Python AI does the rest</div>
+            <div className="empty-text">Select a country · paste resume · AI does the rest</div>
             <div style={{marginTop:"32px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"12px",maxWidth:"500px",margin:"32px auto 0"}}>
               {[
                 {step:"01",title:"Select Country",desc:"Choose from 40+ countries across all regions"},
-                {step:"02",title:"Paste Resume",desc:"Python backend detects skills, role & salary benchmarks"},
-                {step:"03",title:"Get Matched",desc:"Flask API returns real jobs sorted by rating & fit"},
+                {step:"02",title:"Paste Resume",desc:"AI detects your skills, role & salary benchmarks instantly"},
+                {step:"03",title:"Get Matched",desc:"Jobs ranked by company rating, match score & salary"},
               ].map(s=>(
                 <div key={s.step} style={{background:"var(--card)",border:"1px solid var(--border)",borderRadius:"12px",padding:"16px",textAlign:"left",boxShadow:"var(--shadow)"}}>
                   <div style={{fontFamily:"monospace",fontSize:"11px",color:"var(--muted2)",marginBottom:"6px"}}>{s.step}</div>
