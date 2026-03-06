@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RESUMATCH ULTRA — AI Job Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --ink:#e8eaf0;
+  --paper:#0d0f14;
+  --card:#161a22;
+  --card2:#1c2130;
+  --border:#262d3d;
+  --border2:#313a50;
+  --accent:#7c6fff;
+  --green:#00d48a;
+  --green-light:rgba(0,212,138,0.12);
+  --orange:#ff8c42;
+  --orange-light:rgba(255,140,66,0.12);
+  --blue:#4d9fff;
+  --blue-light:rgba(77,159,255,0.12);
+  --red:#ff5c6c;
+  --red-light:rgba(255,92,108,0.12);
+  --yellow:#ffd166;
+  --yellow-light:rgba(255,209,102,0.12);
+  --purple:#b197fc;
+  --purple-light:rgba(177,151,252,0.12);
+  --text:#e8eaf0;
+  --muted:#7a8499;
+  --muted2:#4a5268;
+  --shadow:0 1px 3px rgba(0,0,0,0.4),0 4px 16px rgba(0,0,0,0.3);
+  --shadow-lg:0 4px 24px rgba(0,0,0,0.5),0 1px 4px rgba(0,0,0,0.4);
+}
+
+body{
+  background:var(--paper);
+  color:var(--text);
+  font-family:'Bricolage Grotesque',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:9999;mix-blend-mode:screen;opacity:0.4;
+}
+
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#0a0c10}
+::-webkit-scrollbar-thumb{background:#2a3245;border-radius:3px}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+.fu{animation:fadeUp .5s ease forwards}
+.fu1{animation:fadeUp .5s .1s ease forwards;opacity:0}
+.fu2{animation:fadeUp .5s .2s ease forwards;opacity:0}
+.fu3{animation:fadeUp .5s .3s ease forwards;opacity:0}
+
+.hdr{
+  position:sticky;top:0;z-index:200;
+  background:rgba(13,15,20,0.92);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:14px 32px;
+  display:flex;align-items:center;gap:16px;
+}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{
+  width:36px;height:36px;
+  background:linear-gradient(135deg,#7c6fff,#4d9fff);
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:14px;
+  color:#fff;font-weight:700;letter-spacing:-1px;
+}
+.logo-name{font-weight:800;font-size:17px;letter-spacing:-0.5px;}
+.logo-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+.hdr-nav{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.nav-tab{
+  padding:8px 16px;border-radius:8px;border:1px solid transparent;
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;
+  cursor:pointer;transition:all .2s;background:transparent;color:var(--muted);
+}
+.nav-tab:hover{color:var(--text);background:var(--card2);}
+.nav-tab.active{background:linear-gradient(135deg,#7c6fff,#4d9fff);color:#fff;border-color:transparent;}
+
+.main{max-width:980px;margin:0 auto;padding:44px 20px 100px;}
+
+.hero{text-align:center;margin-bottom:48px;}
+.hero-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;
+  text-transform:uppercase;padding:5px 14px;border-radius:20px;
+  background:linear-gradient(135deg,rgba(124,111,255,0.2),rgba(77,159,255,0.2));color:var(--purple);border:1px solid rgba(124,111,255,0.3);margin-bottom:20px;
+}
+.hero h1{font-size:clamp(36px,7vw,64px);font-weight:800;letter-spacing:-3px;line-height:1.0;margin-bottom:16px;color:var(--text);}
+.hero h1 span{background:linear-gradient(135deg,var(--purple),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero p{color:#8892a4;font-size:16px;max-width:520px;margin:0 auto;line-height:1.7;font-weight:400;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:20px;box-shadow:var(--shadow);}
+
+.field-label{
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  letter-spacing:2px;text-transform:uppercase;color:var(--muted);
+  margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;
+}
+
+textarea{
+  width:100%;height:200px;resize:vertical;
+  background:var(--card2);border:1.5px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:14px;
+  line-height:1.75;padding:16px;font-family:'Bricolage Grotesque',sans-serif;
+  transition:border-color .2s;
+}
+textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,111,255,0.15);}
+
+.country-regions{display:flex;flex-direction:column;gap:14px;}
+.region-title{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:7px;}
+.country-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.country-chip{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);
+  font-size:12px;cursor:pointer;transition:all .15s;background:transparent;color:var(--text);
+  font-family:'Bricolage Grotesque',sans-serif;
+}
+.country-chip:hover{border-color:var(--accent);background:rgba(124,111,255,0.1);}
+.country-chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+.analyze-btn{
+  width:100%;padding:18px;border:none;border-radius:12px;
+  background:linear-gradient(135deg,#7c6fff,#4d9fff);color:#fff;
+  font-family:'JetBrains Mono',monospace;font-size:12px;
+  font-weight:700;letter-spacing:2px;cursor:pointer;
+  margin-top:20px;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 4px 20px rgba(124,111,255,0.35);
+}
+.analyze-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 28px rgba(124,111,255,0.5);}
+.analyze-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.2);border-top:2px solid #fff;animation:spin .8s linear infinite;flex-shrink:0;}
+
+.terminal{
+  background:#080a0f;border-radius:12px;padding:20px;
+  font-family:'JetBrains Mono',monospace;font-size:12px;
+  margin-bottom:20px;border:1px solid rgba(124,111,255,0.15);
+  max-height:240px;overflow-y:auto;
+}
+.t-line{margin-bottom:6px;display:flex;gap:10px;animation:fadeIn .2s ease;}
+.t-prompt{color:#00875a;flex-shrink:0;}
+.t-text{color:#c9d1d9;}
+.t-ok{color:#00875a;}
+.t-warn{color:#d97706;}
+.t-err{color:#ef4444;}
+.t-data{color:#60a5fa;}
+.t-cursor{display:inline-block;width:8px;height:12px;background:#00875a;animation:blink 1s step-end infinite;vertical-align:text-bottom;}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px;}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 12px;text-align:center;box-shadow:var(--shadow);}
+.stat-val{font-size:28px;font-weight:800;line-height:1;}
+.stat-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:5px;}
+
+.job-card{background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;cursor:pointer;transition:all .2s;box-shadow:var(--shadow);overflow:hidden;}
+.job-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px);}
+.jc-header{padding:18px 22px;display:flex;align-items:flex-start;gap:14px;}
+.jc-meta{flex:1;min-width:0;}
+.jc-rank{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:3px;display:flex;align-items:center;gap:8px;}
+.jc-title{font-size:17px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px;}
+.jc-badges{display:flex;flex-wrap:wrap;gap:5px;}
+.badge{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 9px;border-radius:4px;border:1px solid;}
+.b-green{background:var(--green-light);color:var(--green);border-color:rgba(0,135,90,0.2);}
+.b-orange{background:var(--orange-light);color:var(--orange);border-color:rgba(217,95,0,0.2);}
+.b-blue{background:var(--blue-light);color:var(--blue);border-color:rgba(0,85,204,0.2);}
+.b-red{background:var(--red-light);color:var(--red);border-color:rgba(192,57,43,0.2);}
+.b-yellow{background:var(--yellow-light);color:var(--yellow);border-color:rgba(184,134,11,0.2);}
+.b-purple{background:var(--purple-light);color:var(--purple);border-color:rgba(91,33,182,0.2);}
+.b-gray{background:var(--card2);color:var(--muted);border-color:var(--border);}
+
+.jc-body{border-top:1px solid var(--border);padding:22px;animation:fadeIn .25s ease;}
+.metrics-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;}
+.metric{background:var(--card2);border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border);}
+.metric-val{font-size:22px;font-weight:800;}
+.metric-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px;}
+
+.ai-box{background:linear-gradient(135deg,rgba(0,212,138,0.07),rgba(77,159,255,0.07));border:1px solid rgba(0,135,90,0.15);border-radius:10px;padding:16px;margin-bottom:16px;}
+.ai-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--green);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.ai-text{font-size:13px;color:var(--text);line-height:1.75;}
+
+.stag{display:inline-flex;align-items:center;font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 9px;border-radius:4px;border:1px solid;}
+.action-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+.action-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:12px;font-family:'JetBrains Mono',monospace;text-decoration:none;border:1.5px solid;transition:all .15s;cursor:pointer;}
+
+.learn-card{background:linear-gradient(135deg,rgba(0,212,138,0.05),rgba(77,159,255,0.05));border:1px solid rgba(0,135,90,0.15);border-radius:14px;padding:24px;margin-bottom:20px;box-shadow:var(--shadow);}
+.learn-title{font-size:18px;font-weight:800;margin-bottom:4px;color:var(--text);}
+.learn-sub{font-size:13px;color:var(--muted);margin-bottom:20px;}
+
+.skill-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--card);border-radius:10px;margin-bottom:8px;border:1px solid var(--border);transition:all .2s;}
+.skill-item:hover{box-shadow:var(--shadow);}
+.skill-name{min-width:130px;font-weight:600;font-size:14px;}
+.skill-why{font-size:12px;color:var(--muted);flex:1;}
+.skill-bar-bg{width:80px;height:5px;background:var(--border2);border-radius:3px;overflow:hidden;flex-shrink:0;}
+.skill-bar{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--green),var(--purple));transition:width 1.2s ease;}
+.skill-weeks{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);flex-shrink:0;min-width:35px;text-align:right;}
+
+.course-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;font-size:11px;background:var(--card2);border:1px solid var(--border);text-decoration:none;color:var(--text);transition:all .15s;font-family:'JetBrains Mono',monospace;}
+.course-chip:hover{background:linear-gradient(135deg,#7c6fff,#4d9fff);color:#fff;border-color:transparent;}
+
+.boards-section{margin-bottom:28px;}
+.boards-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.boards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;}
+.board-card{display:flex;flex-direction:column;gap:10px;background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:14px;text-decoration:none;transition:all .2s;color:var(--text);box-shadow:var(--shadow);}
+.board-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.board-top{display:flex;align-items:center;gap:10px;}
+.board-icon{font-size:20px;flex-shrink:0;}
+.board-name{font-size:13px;font-weight:700;}
+.board-desc{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-top:1px;}
+.board-bottom{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:10px;}
+.stars{color:var(--yellow);letter-spacing:1px;font-size:11px;}
+
+.role-banner{
+  background:linear-gradient(135deg,#1e1640,#0f1e35);color:#fff;
+  border:1px solid rgba(124,111,255,0.3);
+  border-radius:14px;padding:22px 28px;
+  margin-bottom:20px;display:flex;align-items:center;gap:20px;
+  box-shadow:0 4px 24px rgba(124,111,255,0.2);
+  animation:fadeUp .4s ease forwards;
+}
+
+.gjobs-link{display:flex;align-items:center;gap:16px;background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:24px;text-decoration:none;transition:all .2s;box-shadow:var(--shadow);color:var(--text);}
+.gjobs-link:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px);}
+
+.sort-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.sort-btn{padding:5px 12px;border-radius:6px;border:1.5px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;transition:all .15s;background:transparent;color:var(--muted);}
+.sort-btn.active{background:linear-gradient(135deg,#7c6fff,#4d9fff);color:#fff;border-color:transparent;}
+.sort-btn:hover:not(.active){background:var(--card2);}
+
+.empty{text-align:center;padding:80px 20px;color:var(--muted2);}
+.empty-icon{font-size:64px;margin-bottom:16px;animation:float 3s ease infinite;}
+.empty-text{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;}
+
+.err-box{background:var(--red-light);border:1px solid rgba(192,57,43,0.2);border-radius:10px;padding:14px 18px;color:var(--red);font-size:14px;margin-bottom:16px;}
+.section-hdr{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+
+@media(max-width:640px){
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .metrics-3{grid-template-columns:1fr 1fr;}
+  .hdr{padding:12px 16px;}
+  .main{padding:28px 14px 80px;}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script id="countries-data" type="application/json">{{ countries | tojson }}</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script type="text/babel">
+{% raw %}
+const {useState,useEffect,useRef,useCallback}=React;
+
+// Load countries data injected by Flask/Jinja2
+const COUNTRIES_RAW = JSON.parse(document.getElementById('countries-data').textContent);
+
+// Rebuild COUNTRIES into region → array format for the selector
+const COUNTRIES = COUNTRIES_RAW;
+
+/* ─────────────────────────────────────────────
+   COMPONENTS
+───────────────────────────────────────────── */
+function ScoreRing({score,size=56}){
+  const pct=Math.round(score*100);
+  const r=20,circ=2*Math.PI*r,dash=(pct/100)*circ;
+  const col=pct>=70?"#00875a":pct>=45?"#b8860b":"#c0392b";
+  return(
+    <svg width={size} height={size} viewBox="0 0 48 48" style={{flexShrink:0}}>
+      <circle cx="24" cy="24" r={r} fill="none" stroke="#262d3d" strokeWidth="5"/>
+      <circle cx="24" cy="24" r={r} fill="none" stroke={col} strokeWidth="5"
+        strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
+        transform="rotate(-90 24 24)" style={{transition:"stroke-dasharray .8s ease"}}/>
+      <text x="24" y="27" textAnchor="middle" fontSize="9"
+        fill={col} fontFamily="monospace" fontWeight="bold">{pct}%</text>
+    </svg>
+  );
+}
+
+function Stars({rating}){
+  const full=Math.floor(rating),half=rating%1>=0.5;
+  return(
+    <span className="stars">
+      {"★".repeat(full)}{half?"½":""}{"☆".repeat(5-full-(half?1:0))}
+      <span style={{color:"var(--muted)",fontSize:"10px",marginLeft:"4px",fontFamily:"monospace"}}>{Number(rating).toFixed(1)}</span>
+    </span>
+  );
+}
+
+function Terminal({lines}){
+  const ref=useRef();
+  useEffect(()=>{if(ref.current)ref.current.scrollTop=ref.current.scrollHeight;},[lines]);
+  if(!lines.length)return null;
+  return(
+    <div className="terminal" ref={ref}>
+      {lines.map((l,i)=>(
+        <div key={i} className="t-line">
+          <span className="t-prompt">$</span>
+          <span className={`t-${l.type||"text"}`}>{l.text}</span>
+        </div>
+      ))}
+      <div className="t-line"><span className="t-prompt">$</span><span className="t-cursor"/></div>
+    </div>
+  );
+}
+
+function JobCard({job,index}){
+  const[open,setOpen]=useState(false);
+  const[rev,setRev]=useState(null);
+  const[revLoad,setRevLoad]=useState(false);
+  const pct=Math.round(job.score*100);
+  const col=pct>=70?"var(--green)":pct>=45?"var(--yellow)":"var(--red)";
+
+  async function toggle(){
+    setOpen(p=>!p);
+    if(!open&&!rev){
+      setRevLoad(true);
+      try{
+        // Call Flask backend for AI review
+        const resp=await fetch("/api/review",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(job)});
+        setRev(await resp.json());
+      }catch{setRev({review:"Unable to generate review.",prioritySkills:[]});}
+      setRevLoad(false);
+    }
+  }
+
+  return(
+    <div className="job-card" style={{borderLeft:`3px solid ${col}`,animation:`fadeUp .4s ease ${index*.06}s both`}} onClick={toggle}>
+      <div className="jc-header">
+        <ScoreRing score={job.score}/>
+        <div className="jc-meta">
+          <div className="jc-rank">
+            <span>#{index+1}</span>
+            <Stars rating={job.companyRating||3.5}/>
+            <span style={{color:"var(--muted2)",fontFamily:"monospace"}}>{job.company}</span>
+          </div>
+          <div className="jc-title">{job.title}</div>
+          <div className="jc-badges">
+            {job.salary&&<span className="badge b-yellow">💰 {job.salary}</span>}
+            {job.location&&<span className="badge b-blue">📍 {job.location}</span>}
+            {job.remote&&<span className="badge b-green">🌐 Remote</span>}
+            {job.experience&&<span className="badge b-gray">⏱ {job.experience}</span>}
+            {(job.requiredSkills||[]).slice(0,2).map(t=><span key={t} className="badge b-gray">{t}</span>)}
+          </div>
+        </div>
+        <span style={{color:"var(--muted2)",fontSize:"13px",flexShrink:0}}>{open?"▲":"▼"}</span>
+      </div>
+
+      {open&&(
+        <div className="jc-body" onClick={e=>e.stopPropagation()}>
+          <div className="metrics-3" style={{marginBottom:"18px"}}>
+            {[
+              {l:"Match Score",v:`${pct}%`,c:col},
+              {l:"Skill Overlap",v:`${Math.round((job.skillScore||0)*100)}%`,c:"var(--purple)"},
+              {l:"Company Rating",v:`${Number(job.companyRating||3.5).toFixed(1)}/5`,c:"var(--yellow)"},
+            ].map(m=>(
+              <div key={m.l} className="metric">
+                <div className="metric-val" style={{color:m.c}}>{m.v}</div>
+                <div className="metric-lbl">{m.l}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="ai-box" style={{marginBottom:"16px"}}>
+            <div className="ai-label">⚡ AI Career Coach</div>
+            {revLoad?(
+              <div style={{display:"flex",gap:"8px",alignItems:"center",color:"var(--muted)",fontSize:"13px"}}>
+                <span className="spin" style={{borderTopColor:"var(--green)"}}/>Generating personalized review...
+              </div>
+            ):rev?(
+              <>
+                <p className="ai-text">{rev.review}</p>
+                {rev.prioritySkills?.length>0&&(
+                  <div style={{marginTop:"12px"}}>
+                    <div style={{fontFamily:"monospace",fontSize:"9px",color:"var(--green)",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"6px"}}>🎯 Priority skills to unlock this role</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:"5px"}}>
+                      {rev.prioritySkills.map(s=><span key={s} className="stag" style={{background:"var(--purple-light)",color:"var(--purple)",borderColor:"rgba(91,33,182,0.2)"}}>{s}</span>)}
+                    </div>
+                  </div>
+                )}
+              </>
+            ):null}
+          </div>
+
+          {job.matched?.length>0&&(
+            <div style={{marginBottom:"12px"}}>
+              <div style={{fontFamily:"monospace",fontSize:"9px",color:"var(--muted)",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"7px"}}>✅ Skills you have ({job.matched.length})</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:"5px"}}>
+                {job.matched.map(s=><span key={s} className="stag" style={{background:"var(--green-light)",color:"var(--green)",borderColor:"rgba(0,135,90,0.2)"}}>{s}</span>)}
+              </div>
+            </div>
+          )}
+          {job.missing?.length>0&&(
+            <div style={{marginBottom:"14px"}}>
+              <div style={{fontFamily:"monospace",fontSize:"9px",color:"var(--muted)",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"7px"}}>❌ Skills to learn ({job.missing.length})</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:"5px"}}>
+                {job.missing.map(s=><span key={s} className="stag" style={{background:"var(--red-light)",color:"var(--red)",borderColor:"rgba(192,57,43,0.2)"}}>{s}</span>)}
+              </div>
+            </div>
+          )}
+          {job.niceToHave?.length>0&&(
+            <div style={{marginBottom:"14px"}}>
+              <div style={{fontFamily:"monospace",fontSize:"9px",color:"var(--muted)",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"7px"}}>💡 Nice to have</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:"5px"}}>
+                {job.niceToHave.map(s=><span key={s} className="stag" style={{background:"var(--orange-light)",color:"var(--orange)",borderColor:"rgba(217,95,0,0.2)"}}>{s}</span>)}
+              </div>
+            </div>
+          )}
+          {job.snippet&&(
+            <div style={{background:"var(--card2)",borderRadius:"8px",padding:"12px",fontSize:"13px",color:"var(--muted)",lineHeight:"1.7",margin:"14px 0",borderLeft:"3px solid rgba(124,111,255,0.5)"}}>
+              {job.snippet}
+            </div>
+          )}
+          <div className="action-row">
+            {job.linkedinUrl&&<a href={job.linkedinUrl} target="_blank" rel="noopener noreferrer" className="action-btn"
+              style={{background:"rgba(0,119,181,0.2)",color:"#4d9fff",borderColor:"rgba(77,159,255,0.3)"}}>💼 LinkedIn Jobs →</a>}
+            {job.indeedUrl&&<a href={job.indeedUrl} target="_blank" rel="noopener noreferrer" className="action-btn"
+              style={{background:"rgba(37,87,167,0.2)",color:"#4d9fff",borderColor:"rgba(77,159,255,0.3)"}}>🔍 Indeed</a>}
+            {job.googleJobsUrl&&<a href={job.googleJobsUrl} target="_blank" rel="noopener noreferrer" className="action-btn"
+              style={{background:"var(--yellow-light)",color:"var(--yellow)",borderColor:"rgba(184,134,11,0.2)"}}>🌐 Google Jobs</a>}
+            {job.naukri&&<a href={job.naukri} target="_blank" rel="noopener noreferrer" className="action-btn"
+              style={{background:"var(--orange-light)",color:"var(--orange)",borderColor:"rgba(217,95,0,0.2)"}}>🔶 Naukri</a>}
+            {job.wellfoundUrl&&<a href={job.wellfoundUrl} target="_blank" rel="noopener noreferrer" className="action-btn"
+              style={{background:"var(--purple-light)",color:"var(--purple)",borderColor:"rgba(91,33,182,0.2)"}}>🚀 Wellfound</a>}
+            {job.glassdoorUrl&&<a href={job.glassdoorUrl} target="_blank" rel="noopener noreferrer" className="action-btn"
+              style={{background:"var(--green-light)",color:"var(--green)",borderColor:"rgba(0,135,90,0.2)"}}>⭐ Glassdoor Reviews</a>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LearningPath({role,missingSkills,userSkills}){
+  const[data,setData]=useState([]);
+  const[loading,setLoading]=useState(true);
+
+  useEffect(()=>{
+    if(!role||!missingSkills.length){setLoading(false);return;}
+    // Call Flask backend for roadmap
+    fetch("/api/roadmap",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({role,missingSkills:missingSkills.slice(0,7),userSkills})})
+      .then(r=>r.json())
+      .then(d=>{setData(d);setLoading(false);})
+      .catch(()=>setLoading(false));
+  },[role]);
+
+  if(!role)return null;
+
+  return(
+    <div className="learn-card fu2">
+      <div className="learn-title">📈 AI Learning Roadmap</div>
+      <div className="learn-sub">Personalized path to become a <strong>{role}</strong> — sorted by impact</div>
+      {loading?(
+        <div style={{display:"flex",gap:"10px",alignItems:"center",color:"var(--muted)",fontSize:"13px"}}>
+          <span className="spin" style={{borderTopColor:"var(--green)"}}/>Generating your personalized roadmap...
+        </div>
+      ):data.length?(
+        data.map(item=>(
+          <div key={item.skill} className="skill-item">
+            <div>
+              <div className="skill-name">{item.skill}</div>
+              <div className="skill-why">{item.why}</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:"5px",marginTop:"7px"}}>
+                {(item.resources||[]).map(r=>(
+                  <a key={r.name} href={r.url} target="_blank" rel="noopener noreferrer" className="course-chip">
+                    🎓 {r.name} <span style={{opacity:.6,fontSize:"9px"}}>({r.platform})</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"6px",flexShrink:0}}>
+              <div className="skill-bar-bg">
+                <div className="skill-bar" style={{width:`${item.priority}%`}}/>
+              </div>
+              <span className="skill-weeks">~{item.weeks}w</span>
+              <span style={{fontFamily:"monospace",fontSize:"9px",color:"var(--muted2)"}}>{item.priority}% priority</span>
+            </div>
+          </div>
+        ))
+      ):null}
+    </div>
+  );
+}
+
+/* Build board URL from template */
+function makeBoardUrl(template, skills, city){
+  const s = (skills||[]).slice(0,3).join(" ");
+  const loc = city && city!=="Any City" ? city : "";
+  return template
+    .replace("{skills}", encodeURIComponent(s))
+    .replace("{loc}", encodeURIComponent(loc))
+    .replace("{location}", encodeURIComponent(loc));
+}
+
+function BoardLinks({boards,skills,city,isIndia}){
+  if(!boards?.length||!skills?.length)return null;
+  const[search,setSearch]=useState("");
+
+  const filtered=boards.filter(b=>{
+    const q=search.toLowerCase();
+    return !q||b.name.toLowerCase().includes(q)||(b.desc||"").toLowerCase().includes(q);
+  }).sort((a,b)=>b.rating-a.rating);
+
+  return(
+    <div className="boards-section">
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"14px",flexWrap:"wrap",gap:"10px"}}>
+        <div className="boards-title" style={{marginBottom:0}}>
+          <span>🔗</span> {boards.length} Job Boards · Sorted by Rating
+        </div>
+        <input value={search} onChange={e=>setSearch(e.target.value)}
+          placeholder="Search boards..."
+          style={{padding:"6px 12px",borderRadius:"8px",border:"1.5px solid var(--border)",
+            background:"var(--card2)",fontFamily:"'JetBrains Mono',monospace",
+            fontSize:"11px",color:"var(--text)",width:"170px"}}/>
+      </div>
+      <div className="boards-grid">
+        {filtered.map(b=>{
+          const url=makeBoardUrl(b.urlTemplate,skills,city);
+          return(
+            <a key={b.name} href={url} target="_blank" rel="noopener noreferrer" className="board-card"
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=b.color;e.currentTarget.style.transform="translateY(-2px)";}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border)";e.currentTarget.style.transform="none";}}>
+              <div className="board-top">
+                <span className="board-icon">{b.icon}</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div className="board-name">{b.name}</div>
+                  <div className="board-desc">{b.desc}</div>
+                </div>
+                <span style={{color:"var(--muted2)",flexShrink:0,fontSize:"14px"}}>→</span>
+              </div>
+              <div className="board-bottom">
+                <span className="stars">
+                  {"★".repeat(Math.floor(b.rating))}{b.rating%1>=0.5?"½":""}
+                  <span style={{color:"var(--muted)",fontSize:"10px",marginLeft:"4px"}}>{Number(b.rating).toFixed(1)}</span>
+                </span>
+                <span style={{fontFamily:"monospace",fontSize:"9px",color:b.color,background:b.color+"18",borderRadius:"4px",padding:"1px 7px"}}>
+                  {(skills[0]||"").slice(0,12)}
+                </span>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CountrySelector({selected,onSelect}){
+  return(
+    <div className="country-regions">
+      {Object.entries(COUNTRIES).map(([region,countries])=>(
+        <div key={region}>
+          <div className="region-title">— {region} —</div>
+          <div className="country-chips">
+            {countries.map(c=>(
+              <button key={c.code} className={`country-chip ${selected?.code===c.code?"active":""}`}
+                onClick={()=>onSelect(c)}>
+                <span>{c.flag}</span><span>{c.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   MAIN APP
+───────────────────────────────────────────── */
+function App(){
+  const[resume,setResume]=useState("");
+  const[country,setCountry]=useState(null);
+  const[city,setCity]=useState("Any City");
+  const[loading,setLoading]=useState(false);
+  const[logs,setLogs]=useState([]);
+  const[error,setError]=useState("");
+  const[analyzed,setAnalyzed]=useState(false);
+  const[mySkills,setMySkills]=useState([]);
+  const[myRole,setMyRole]=useState(null);
+  const[missing,setMissing]=useState([]);
+  const[jobs,setJobs]=useState([]);
+  const[sortBy,setSortBy]=useState("rating");
+  const[activeTab,setActiveTab]=useState("find");
+  const[salaryRef,setSalaryRef]=useState(null);
+
+  function log(type,text){setLogs(p=>[...p,{type,text}]);}
+
+  async function analyze(){
+    if(!resume.trim()||!country)return;
+    setLoading(true);setError("");setJobs([]);setAnalyzed(false);setLogs([]);
+
+    log("text","Sending resume to Flask backend...");
+    try{
+      log("text","Scanning resume for skills...");
+      const resp=await fetch("/api/analyze",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({resume,country:country.name,city})
+      });
+      const data=await resp.json();
+
+      if(data.error){
+        setError(data.error);
+        setLoading(false);
+        return;
+      }
+
+      setMySkills(data.skills);
+      log("ok",`Detected ${data.skills.length} skills: ${data.skills.slice(0,6).join(", ")}${data.skills.length>6?"...":""}`);
+
+      setMyRole(data.role);
+      log("data",`Detected role: ${data.role} (${data.confidence}% match)`);
+
+      setMissing(data.missing);
+      if(data.missing.length)log("warn",`Skill gaps found: ${data.missing.slice(0,5).join(", ")}${data.missing.length>5?` ... +${data.missing.length-5} more`:""}`);
+
+      setSalaryRef(data.salaryRef);
+      if(data.salaryRef)log("data",`Salary benchmark for ${data.role} in ${country.name}: ${data.salaryRef}`);
+
+      log("ai",`Searching for AI-matched jobs in ${city!=="Any City"?city+", ":""}${country.name}...`);
+      if(data.jobs.length){
+        setJobs(data.jobs);
+        log("ok",`✓ ${data.jobs.length} jobs found, sorted by company rating`);
+      }else{
+        log("warn","No jobs returned — use job board links below");
+      }
+
+      setAnalyzed(true);
+    }catch(e){
+      setError("Error: "+e.message);
+      setAnalyzed(true);
+    }finally{
+      setLoading(false);
+    }
+  }
+
+  function sortedJobs(){
+    if(sortBy==="rating") return[...jobs].sort((a,b)=>(b.companyRating||0)-(a.companyRating||0));
+    if(sortBy==="match")  return[...jobs].sort((a,b)=>b.score-a.score);
+    if(sortBy==="salary") return[...jobs].sort((a,b)=>(b.salary?1:0)-(a.salary?1:0)||b.score-a.score);
+    return jobs;
+  }
+
+  const currentBoards=country?.boards||[];
+  const currentCities=country?.cities||[];
+
+  return(
+    <div style={{minHeight:"100vh"}}>
+      {/* HEADER */}
+      <div className="hdr">
+        <div className="logo">
+          <div className="logo-icon">RM</div>
+          <div>
+            <div className="logo-name">RESUMATCH ULTRA</div>
+            <div className="logo-sub">AI Job Intelligence · Country-Wise · Flask Powered</div>
+          </div>
+        </div>
+        {analyzed&&(
+          <div className="hdr-nav">
+            {[
+              {id:"find",  label:"🔍 Find Jobs"},
+              {id:"learn", label:"📚 Learn Skills"},
+              {id:"boards",label:"🔗 Job Boards"},
+            ].map(t=>(
+              <button key={t.id} className={`nav-tab ${activeTab===t.id?"active":""}`}
+                onClick={()=>setActiveTab(t.id)}>{t.label}</button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="main">
+        {/* HERO */}
+        {!analyzed&&(
+          <div className="hero fu">
+            <div className="hero-tag">🐍 Python + Flask Backend · React Frontend</div>
+            <h1>AI Finds Your<br/><span>Perfect Job</span><br/>Worldwide</h1>
+            <p>Paste your resume — Python AI detects your skills, identifies your role, searches live jobs in 40+ countries, scores every match, and builds you a personalised learning roadmap.</p>
+          </div>
+        )}
+
+        {/* INPUT CARD */}
+        <div className={`card ${analyzed?"fu":"fu1"}`} style={analyzed?{marginBottom:"12px"}:{}}>
+          {analyzed&&(
+            <div style={{marginBottom:"16px",fontFamily:"monospace",fontSize:"11px",color:"var(--muted)",letterSpacing:"1px",textTransform:"uppercase"}}>
+              ↺ Refine your search
+            </div>
+          )}
+
+          <div className="field-label" style={{marginBottom:"14px"}}>
+            <span>🌍 Select Country</span>
+            {country&&<span style={{color:"var(--accent)",fontWeight:"700"}}>{country.flag} {country.name}</span>}
+          </div>
+          <CountrySelector selected={country} onSelect={c=>{setCountry(c);setCity("Any City");setAnalyzed(false);setJobs([]);}}/>
+
+          {country&&currentCities.length>0&&(
+            <div style={{marginTop:"20px"}}>
+              <div className="field-label">📍 Preferred City</div>
+              <div className="country-chips">
+                {["Any City",...currentCities].map(c=>(
+                  <button key={c} className={`country-chip ${city===c?"active":""}`}
+                    onClick={()=>setCity(c)}>{c}</button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div style={{marginTop:"20px"}}>
+            <div className="field-label">
+              <span>Your Resume</span>
+              <span style={{color:"var(--muted2)"}}>{resume.length} chars</span>
+            </div>
+            <textarea
+              value={resume}
+              onChange={e=>setResume(e.target.value)}
+              placeholder={`Paste your resume or LinkedIn summary here...\n\nExample:\nFull Stack Developer | 4 years\nSkills: React, Node.js, TypeScript, PostgreSQL, Docker, AWS, GraphQL, Git, Agile\n\nBuilt scalable microservices handling 2M+ daily users at FinTech startup.\nLed team of 3 engineers using Scrum methodology.`}
+            />
+            {mySkills.length>0&&(
+              <div style={{display:"flex",flexWrap:"wrap",gap:"5px",marginTop:"10px",alignItems:"center"}}>
+                <span style={{fontFamily:"monospace",fontSize:"9px",color:"var(--muted2)",textTransform:"uppercase",letterSpacing:"1px",marginRight:"4px"}}>Detected:</span>
+                {mySkills.map(s=><span key={s} className="stag" style={{background:"var(--green-light)",color:"var(--green)",borderColor:"rgba(0,135,90,0.2)"}}>{s}</span>)}
+              </div>
+            )}
+          </div>
+
+          <button className="analyze-btn" onClick={analyze}
+            disabled={loading||!resume.trim()||!country}
+            style={(!resume.trim()||!country)?{opacity:.4}:{}}>
+            {loading?(
+              <><span className="spin"/>Scanning + Python AI Job Search Running...</>
+            ):(
+              `🐍 AI FIND MY JOBS IN ${country?country.flag+" "+country.name.toUpperCase():"SELECT A COUNTRY"} →`
+            )}
+          </button>
+        </div>
+
+        {!country&&!analyzed&&(
+          <div style={{textAlign:"center",marginBottom:"12px",fontFamily:"monospace",fontSize:"11px",color:"var(--orange)",letterSpacing:"1px"}}>
+            ↑ Select a country above to get started
+          </div>
+        )}
+
+        {logs.length>0&&<Terminal lines={logs}/>}
+        {error&&<div className="err-box">⚠ {error}</div>}
+
+        {/* ROLE BANNER */}
+        {analyzed&&myRole&&(
+          <div className="role-banner">
+            <div style={{fontSize:"40px"}}>🎯</div>
+            <div style={{flex:1}}>
+              <div style={{fontFamily:"monospace",fontSize:"9px",opacity:.6,letterSpacing:"2px",textTransform:"uppercase",marginBottom:"5px"}}>Detected Role</div>
+              <div style={{fontSize:"22px",fontWeight:"800",letterSpacing:"-0.5px"}}>{myRole}</div>
+              {salaryRef&&(
+                <div style={{fontSize:"13px",opacity:.7,marginTop:"3px"}}>
+                  Salary benchmark in {country.name}: <strong>{salaryRef}</strong>
+                </div>
+              )}
+            </div>
+            <div style={{display:"flex",gap:"20px"}}>
+              {[
+                {l:"Skills Found",v:mySkills.length,c:"#00e5a0"},
+                {l:"Gaps",        v:missing.length, c:"#ffd166"},
+                {l:"Jobs Found",  v:jobs.length,    c:"#60a5fa"},
+              ].map(s=>(
+                <div key={s.l} style={{textAlign:"center"}}>
+                  <div style={{fontSize:"26px",fontWeight:"800",color:s.c}}>{s.v}</div>
+                  <div style={{fontFamily:"monospace",fontSize:"9px",opacity:.5,textTransform:"uppercase",letterSpacing:"1px"}}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TABS */}
+        {analyzed&&(
+          <>
+            {activeTab==="find"&&jobs.length>0&&(
+              <div style={{animation:"fadeIn .3s ease"}}>
+                <div className="sort-row">
+                  <div className="section-hdr" style={{marginBottom:0}}>
+                    {jobs.length} AI-Matched Jobs · {country?.flag} {country?.name}
+                  </div>
+                  <div style={{display:"flex",gap:"6px"}}>
+                    {[{id:"rating",l:"⭐ Rating"},{id:"match",l:"🎯 Match"},{id:"salary",l:"💰 Salary"}].map(s=>(
+                      <button key={s.id} className={`sort-btn ${sortBy===s.id?"active":""}`}
+                        onClick={()=>setSortBy(s.id)}>{s.l}</button>
+                    ))}
+                  </div>
+                </div>
+                {sortedJobs().map((job,i)=><JobCard key={i} job={job} index={i}/>)}
+              </div>
+            )}
+
+            {activeTab==="find"&&!jobs.length&&analyzed&&(
+              <div style={{textAlign:"center",padding:"48px 0",color:"var(--muted)"}}>
+                <div style={{fontSize:"36px",marginBottom:"12px"}}>💡</div>
+                <div style={{fontFamily:"monospace",fontSize:"11px",letterSpacing:"2px"}}>Use the job board links below to find live openings</div>
+                <button className="nav-tab active" style={{marginTop:"14px"}} onClick={()=>setActiveTab("boards")}>View Job Boards →</button>
+              </div>
+            )}
+
+            {activeTab==="learn"&&(
+              <div style={{animation:"fadeIn .3s ease"}}>
+                {missing.length>0?(
+                  <LearningPath role={myRole} missingSkills={missing} userSkills={mySkills}/>
+                ):(
+                  <div style={{textAlign:"center",padding:"60px 0",color:"var(--muted)"}}>
+                    <div style={{fontSize:"48px",marginBottom:"12px"}}>🎉</div>
+                    <div style={{fontWeight:"700",fontSize:"18px",marginBottom:"8px",color:"var(--text)"}}>Full skill match!</div>
+                    <div style={{fontFamily:"monospace",fontSize:"11px",letterSpacing:"2px"}}>You have all required skills for {myRole} — apply now!</div>
+                  </div>
+                )}
+                <div className="card">
+                  <div className="section-hdr">✅ Your Detected Skills ({mySkills.length})</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:"6px"}}>
+                    {mySkills.map(s=><span key={s} className="stag" style={{background:"var(--green-light)",color:"var(--green)",borderColor:"rgba(0,135,90,0.2)"}}>{s}</span>)}
+                  </div>
+                  {missing.length>0&&(
+                    <>
+                      <div className="section-hdr" style={{marginTop:"18px"}}>❌ Missing for {myRole} ({missing.length})</div>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:"6px"}}>
+                        {missing.map(s=><span key={s} className="stag" style={{background:"var(--red-light)",color:"var(--red)",borderColor:"rgba(192,57,43,0.2)"}}>{s}</span>)}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab==="boards"&&(
+              <div style={{animation:"fadeIn .3s ease"}}>
+                <a className="gjobs-link"
+                  href={`https://www.google.com/search?q=${encodeURIComponent(mySkills.slice(0,3).join(" ")+" jobs "+(city!=="Any City"?city+", ":"")+country?.name)}&ibp=htl;jobs`}
+                  target="_blank" rel="noopener noreferrer">
+                  <div style={{fontSize:"32px"}}>🌐</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontFamily:"monospace",fontSize:"10px",color:"var(--purple)",letterSpacing:"2px",textTransform:"uppercase",marginBottom:"4px"}}>
+                      Google Jobs · {city!=="Any City"?city+", ":""}{country?.name} · With Ratings
+                    </div>
+                    <div style={{color:"var(--muted)",fontSize:"13px"}}>
+                      {mySkills.slice(0,4).join(" + ")} · Live results · ⭐ Company ratings included
+                    </div>
+                  </div>
+                  <div style={{fontFamily:"monospace",fontSize:"13px",color:"var(--purple)",flexShrink:0}}>Open →</div>
+                </a>
+                <BoardLinks boards={currentBoards} skills={mySkills} city={city} isIndia={country?.code==="IN"}/>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* EMPTY STATE */}
+        {!analyzed&&!loading&&(
+          <div className="empty fu3">
+            <div className="empty-icon">🌍</div>
+            <div className="empty-text">Select a country · paste resume · Python AI does the rest</div>
+            <div style={{marginTop:"32px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"12px",maxWidth:"500px",margin:"32px auto 0"}}>
+              {[
+                {step:"01",title:"Select Country",desc:"Choose from 40+ countries across all regions"},
+                {step:"02",title:"Paste Resume",desc:"Python backend detects skills, role & salary benchmarks"},
+                {step:"03",title:"Get Matched",desc:"Flask API returns real jobs sorted by rating & fit"},
+              ].map(s=>(
+                <div key={s.step} style={{background:"var(--card)",border:"1px solid var(--border)",borderRadius:"12px",padding:"16px",textAlign:"left",boxShadow:"var(--shadow)"}}>
+                  <div style={{fontFamily:"monospace",fontSize:"11px",color:"var(--muted2)",marginBottom:"6px"}}>{s.step}</div>
+                  <div style={{fontWeight:"700",fontSize:"14px",marginBottom:"5px"}}>{s.title}</div>
+                  <div style={{fontSize:"12px",color:"var(--muted)",lineHeight:"1.5"}}>{s.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+{% endraw %}
+</script>
+</body>
+</html>
